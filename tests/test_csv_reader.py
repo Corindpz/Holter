@@ -39,6 +39,25 @@ def test_normalize_ticket_sets_semaine_code():
     assert ticket.id == "00001"
 
 
+def test_read_xlsx_returns_rows(tmp_path):
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Case Number", "Subject", "Priority", "Status", "Product__c", "Account Name", "Description", "Created Date"])
+    ws.append(["00010", "Erreur XLSX", "Bloquant", "Ouvert", "ProdX", "SiteX", "Desc XLSX", "2026-05-26"])
+    xlsx_path = tmp_path / "export.xlsx"
+    wb.save(str(xlsx_path))
+    mapping = {
+        "id": "Case Number", "objet": "Subject", "priorite": "Priority",
+        "statut": "Status", "produit": "Product__c", "site": "Account Name",
+        "description": "Description", "date_creation": "Created Date",
+    }
+    rows = read_csv(str(xlsx_path), mapping)
+    assert len(rows) == 1
+    assert rows[0]["id"] == "00010"
+    assert rows[0]["priorite"] == "Bloquant"
+
+
 def test_deduplicate_removes_existing(tmp_db):
     from src.db.schema import init_db
     from src.db.connection import configure, get_db

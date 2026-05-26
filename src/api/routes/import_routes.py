@@ -33,7 +33,6 @@ def _compute_semaine_code(date_str: Optional[str]) -> str:
 async def import_file(file: UploadFile = File(...)):
     content = await file.read()
 
-    # Preserve original extension so read_csv picks the right reader
     original_name = file.filename or "upload.csv"
     suffix = Path(original_name).suffix.lower() or ".csv"
 
@@ -71,5 +70,9 @@ async def import_file(file: UploadFile = File(...)):
                 (len(tickets), semaine_code)
             )
         return {"semaine_code": semaine_code, "imported": len(tickets)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         Path(tmp_path).unlink(missing_ok=True)

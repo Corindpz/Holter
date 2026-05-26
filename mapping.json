@@ -1,10 +1,10 @@
 {
-  "id": "Case Number",
-  "objet": "Subject",
-  "priorite": "Priority",
-  "statut": "Status",
-  "produit": "Product__c",
-  "site": "Account Name",
+  "id": "Numéro de la requête",
+  "objet": "Objet",
+  "priorite": "Priorité",
+  "statut": "Statut",
+  "produit": "Produit",
+  "site": "Nom du compte",
   "description": "Description",
-  "date_creation": "Created Date"
+  "date_creation": "Date incident critique"
 }

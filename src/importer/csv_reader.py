@@ -26,18 +26,42 @@ def _read_csv(file_path: Path, mapping: Dict[str, str]) -> List[Dict[str, Any]]:
     return rows
 
 
+def _find_header_row(ws) -> int:
+    """Return 1-based row index of first row with ≥ 5 non-null cells."""
+    for i, row in enumerate(ws.iter_rows(min_row=1, max_row=50, values_only=True), start=1):
+        if sum(1 for v in row if v is not None) >= 5:
+            return i
+    return 1
+
+
 def _read_xlsx(file_path: Path, mapping: Dict[str, str]) -> List[Dict[str, Any]]:
     import openpyxl
     wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
     ws = wb.active
-    headers = [str(cell.value).strip() if cell.value is not None else "" for cell in next(ws.iter_rows(min_row=1, max_row=1))]
+
+    header_row_idx = _find_header_row(ws)
+    headers = []
+    for row in ws.iter_rows(min_row=header_row_idx, max_row=header_row_idx, values_only=True):
+        headers = [str(v).strip() if v is not None else "" for v in row]
+
+    id_column = mapping.get("id", "")
+    seen_ids: set = set()
     rows = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        raw_row = {headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row)}
+
+    for row in ws.iter_rows(min_row=header_row_idx + 1, values_only=True):
+        raw_row = {headers[i]: (str(v).strip() if v is not None else "") for i, v in enumerate(row) if i < len(headers)}
+
+        # Salesforce exports repeat rows per comment — deduplicate by ticket ID
+        ticket_id = raw_row.get(id_column, "")
+        if not ticket_id or ticket_id in seen_ids:
+            continue
+        seen_ids.add(ticket_id)
+
         normalized = {}
         for internal_key, sf_column in mapping.items():
             normalized[internal_key] = raw_row.get(sf_column, "")
         rows.append(normalized)
+
     wb.close()
     return rows
 

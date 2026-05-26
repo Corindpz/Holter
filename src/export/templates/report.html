@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { margin: 1.5cm 1.8cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  h1 { font-size: 16pt; font-weight: bold; margin-bottom: 3pt; }
+  h2 { font-size: 11pt; font-weight: bold; margin-top: 14pt; margin-bottom: 5pt; border-bottom: 1pt solid #ccc; padding-bottom: 3pt; }
+  .meta { font-size: 8pt; color: #888; margin-bottom: 12pt; }
+  .kpi-table { width: 100%; border-collapse: collapse; margin-bottom: 14pt; }
+  .kpi-table td { border: 1pt solid #ddd; padding: 6pt 10pt; text-align: center; }
+  .kpi-val { font-size: 18pt; font-weight: bold; }
+  .kpi-lbl { font-size: 7pt; color: #888; }
+  .kpi-red .kpi-val { color: #E24B4A; }
+  .kpi-amber .kpi-val { color: #EF9F27; }
+  table { width: 100%; border-collapse: collapse; font-size: 7.5pt; margin-bottom: 10pt; }
+  th { background: #f5f5f5; font-weight: bold; padding: 4pt 3pt; text-align: left; border-bottom: 1.5pt solid #ccc; }
+  td { padding: 3pt; border-bottom: 0.5pt solid #eee; vertical-align: top; }
+  .footer { margin-top: 14pt; font-size: 7pt; color: #aaa; border-top: 0.5pt solid #eee; padding-top: 6pt; }
+  .warn { background: #FFF3CD; border: 0.5pt solid #EF9F27; padding: 5pt; font-size: 8pt; margin-bottom: 10pt; }
+</style>
+</head>
+<body>
+
+<h1>HOLTER PMS &mdash; Rapport de revue hebdomadaire</h1>
+<div class="meta">
+  Semaine {{ semaine_code }} &middot; {{ date_debut }} &ndash; {{ date_fin }} &middot;
+  Expert : {{ expert_nom or 'Non renseign&eacute;' }} &middot;
+  G&eacute;n&eacute;r&eacute; le {{ generated_at }}
+</div>
+
+<h2>1. Synth&egrave;se ex&eacute;cutive</h2>
+<table class="kpi-table">
+  <tr>
+    <td><div class="kpi-val">{{ kpis.total }}</div><div class="kpi-lbl">Tickets analys&eacute;s</div></td>
+    <td class="kpi-red"><div class="kpi-val">{{ kpis.analyse_requise }}</div><div class="kpi-lbl">Analyse requise</div></td>
+    <td class="kpi-amber"><div class="kpi-val">{{ kpis.surveiller }}</div><div class="kpi-lbl">&Agrave; surveiller</div></td>
+    <td><div class="kpi-val">{{ kpis.clos }}</div><div class="kpi-lbl">Clos automatiquement</div></td>
+  </tr>
+</table>
+
+<h2>2. Tra&ccedil;abilit&eacute; compl&egrave;te ({{ tickets|length }} tickets)</h2>
+<table>
+  <thead>
+    <tr>
+      <th>#Ticket</th><th>Priorit&eacute;</th><th>Produit</th><th>Objet</th>
+      <th>D&eacute;cision IA</th><th>Signal</th><th>Conf.</th>
+      <th>Action expert</th><th>Justification</th><th>Articles</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tickets %}
+    <tr>
+      <td>{{ t.id }}</td>
+      <td>{{ t.priorite or '' }}</td>
+      <td>{{ t.produit or '' }}</td>
+      <td>{{ t.objet or '' }}</td>
+      <td>{{ t.decision or '' }}</td>
+      <td>{{ t.signal or '' }}</td>
+      <td>{{ ((t.confiance or 0) * 100)|int }}%</td>
+      <td>{{ t.action_expert or '&mdash;' }}</td>
+      <td>{{ t.raisonnement or '' }}{% if t.commentaire %} | Expert: {{ t.commentaire }}{% endif %}</td>
+      <td>{{ t.articles_cites|join(', ') if t.articles_cites else '' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>5. Annexe m&eacute;thodologique</h2>
+<p>
+  Mod&egrave;le IA : <b>{{ model_used }}</b> &middot;
+  Version dictionnaire : <b>{{ dictionary_version }}</b> &middot;
+  Seuil CLOS : <b>{{ (threshold_clos * 100)|int }}%</b> &middot;
+  M&eacute;thode : pipeline 3 passes (triage + RAG + auto-critique) &middot;
+  Conformit&eacute; : ISO 13485 &sect;8.2.2, MDR Art.87, traitement 100% local HDS.
+</p>
+
+<div class="footer">
+  HOLTER PMS v1 &middot; Donn&eacute;es trait&eacute;es localement &middot; {{ generated_at }}
+</div>
+</body>
+</html>

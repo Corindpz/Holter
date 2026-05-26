@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HOLTER PMS</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1><span class="accent"></span>HOLTER <span class="subtitle">PMS Intelligence</span></h1>
+    <p class="meta-line" id="meta-line">Prêt</p>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <select id="semaine-select" onchange="loadSemaine()" style="font-size:13px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:white;min-width:120px"></select>
+    <label class="upload-btn">Importer CSV<input type="file" id="csv-input" accept=".csv" onchange="importCSV()" style="display:none"></label>
+  </div>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('dashboard',this)">Tableau de bord</button>
+  <button class="tab" onclick="switchTab('review',this)">File de revue <span class="tab-badge" id="badge-pending"></span></button>
+  <button class="tab" onclick="switchTab('signals',this)">Signaux vigilance</button>
+  <button class="tab" onclick="switchTab('dictionary',this)">Dictionnaire</button>
+</div>
+<div id="panel-dashboard" class="panel active"><p style="color:#888;padding:20px">Importez un CSV pour commencer.</p></div>
+<div id="panel-review" class="panel"></div>
+<div id="panel-signals" class="panel"></div>
+<div id="panel-dictionary" class="panel"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

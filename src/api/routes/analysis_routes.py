@@ -1,6 +1,5 @@
 import asyncio
 import json
-from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from src.db.connection import get_db
@@ -9,9 +8,9 @@ from src.analysis.rag import RegulatoryRAG
 from src.analysis.pipeline import AnalysisPipeline
 from src.dictionary.dict_manager import DictionaryManager
 from src.models import Ticket
+from src.config import get_settings
 
 router = APIRouter(tags=["analysis"])
-_settings = json.loads(Path("settings.json").read_text())
 _progress: dict = {}
 
 
@@ -24,14 +23,15 @@ async def run_analysis(semaine_code: str):
     if not rows:
         raise HTTPException(status_code=404, detail="Aucun ticket pour cette semaine")
 
-    model = select_model(get_available_ram_gb(), _settings.get("model_override"))
-    ollama = OllamaClient(_settings["ollama_url"], model)
-    rag = RegulatoryRAG(_settings["chroma_path"], _settings["regulatory_path"])
+    settings = get_settings()
+    model = select_model(get_available_ram_gb(), settings.get("model_override"))
+    ollama = OllamaClient(settings["ollama_url"], model)
+    rag = RegulatoryRAG(settings["chroma_path"], settings["regulatory_path"])
     dm = DictionaryManager()
     pipeline = AnalysisPipeline(
         ollama=ollama, rag=rag, dictionary_entries=dm.list_for_prompt(),
-        threshold_clos=_settings["confidence_threshold_clos"],
-        threshold_escalate=_settings["confidence_threshold_escalate"],
+        threshold_clos=settings["confidence_threshold_clos"],
+        threshold_escalate=settings["confidence_threshold_escalate"],
     )
 
     _progress[semaine_code] = {"done": 0, "total": len(rows), "running": True}

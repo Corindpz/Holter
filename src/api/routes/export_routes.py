@@ -1,15 +1,14 @@
 import json
 from datetime import datetime, timezone
-from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 
 from src.db.connection import get_db
 from src.export.pdf_generator import generate_pdf
 from src.review.review_manager import ReviewManager
+from src.config import get_settings
 
 router = APIRouter(tags=["export"])
-_settings = json.loads(Path("settings.json").read_text())
 _rm = ReviewManager()
 
 
@@ -53,17 +52,18 @@ async def export_pdf(semaine_code: str):
         else:
             kpis["clos"] += 1
 
+    settings = get_settings()
     data = {
         "semaine_code": semaine_code,
         "date_debut": sem["date_debut"],
         "date_fin": sem["date_fin"],
         "expert_nom": sem["expert_nom"],
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "model_used": _settings.get("model_override") or "auto-detect",
+        "model_used": settings.get("model_override") or "auto-detect",
         "kpis": kpis,
         "tickets": tickets,
         "dictionary_version": dict_count,
-        "threshold_clos": _settings["confidence_threshold_clos"],
+        "threshold_clos": settings["confidence_threshold_clos"],
     }
     pdf_bytes = generate_pdf(data)
     filename = f"holter_pms_{semaine_code}.pdf"

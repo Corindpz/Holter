@@ -1,0 +1,10 @@
+{
+  "port": 8765,
+  "ollama_url": "http://localhost:11434",
+  "model_override": null,
+  "confidence_threshold_clos": 0.85,
+  "confidence_threshold_escalate": 0.70,
+  "chroma_path": "./chroma_db",
+  "regulatory_path": "./regulatory",
+  "db_path": "./holter.db"
+}

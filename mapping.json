@@ -1,0 +1,10 @@
+{
+  "id": "Case Number",
+  "objet": "Subject",
+  "priorite": "Priority",
+  "statut": "Status",
+  "produit": "Product__c",
+  "site": "Account Name",
+  "description": "Description",
+  "date_creation": "Created Date"
+}

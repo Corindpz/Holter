@@ -6,18 +6,17 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 import tempfile
 
 from src.db.connection import get_db
-from src.db.schema import init_db
 from src.importer.csv_reader import read_csv, normalize_ticket
 from src.importer.deduplicator import deduplicate
 from src.anonymizer.masker import mask_text
+from src.config import get_settings, _base_dir
 
 router = APIRouter(tags=["import"])
 
-_mapping_path = Path("mapping.json")
 
-
-def _load_mapping():
-    return json.loads(_mapping_path.read_text(encoding="utf-8"))
+def _load_mapping() -> dict:
+    path = _base_dir() / "mapping.json"
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _compute_semaine_code(date_str: Optional[str]) -> str:
@@ -31,16 +30,21 @@ def _compute_semaine_code(date_str: Optional[str]) -> str:
 
 
 @router.post("/import")
-async def import_csv(file: UploadFile = File(...)):
+async def import_file(file: UploadFile = File(...)):
     content = await file.read()
-    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+
+    # Preserve original extension so read_csv picks the right reader
+    original_name = file.filename or "upload.csv"
+    suffix = Path(original_name).suffix.lower() or ".csv"
+
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
         tmp.write(content)
         tmp_path = tmp.name
     try:
         mapping = _load_mapping()
         rows = read_csv(tmp_path, mapping)
         if not rows:
-            raise HTTPException(status_code=400, detail="CSV vide ou mapping incorrect")
+            raise HTTPException(status_code=400, detail="Fichier vide ou mapping incorrect")
 
         semaine_code = _compute_semaine_code(rows[0].get("date_creation"))
         tickets = [normalize_ticket(r, semaine_code) for r in rows if r.get("id")]

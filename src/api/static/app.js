@@ -35,6 +35,7 @@ function switchTab(name, el) {
   if (name === 'review' && currentSemaine) renderReview();
   if (name === 'signals' && currentSemaine) renderSignals();
   if (name === 'dictionary') renderDictionary();
+  if (name === 'exclusions') renderExclusions();
 }
 
 async function importCSV() {
@@ -234,6 +235,68 @@ async function renderDictionary() {
       </tbody>
     </table>
   `;
+}
+
+async function renderExclusions() {
+  const rules = await api('GET', '/exclusions');
+  const champOpts = ['site','produit','objet','type'].map(c => `<option value="${c}">${c}</option>`).join('');
+  const opOpts = [['contient','contient'],['egal','égal à'],['commence_par','commence par']].map(([v,l]) => `<option value="${v}">${l}</option>`).join('');
+  document.getElementById('panel-exclusions').innerHTML = `
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;color:#888;margin-bottom:10px">Les tickets correspondant à une règle active sont exclus de l'analyse IA (CLOS automatique, documenté dans le rapport).</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:white;padding:14px;border-radius:8px;border:1px solid #eee">
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px">Champ</label>
+          <select id="ex-champ" style="padding:6px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px">${champOpts}</select></div>
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px">Opérateur</label>
+          <select id="ex-op" style="padding:6px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px">${opOpts}</select></div>
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px">Valeur</label>
+          <input id="ex-val" placeholder="ex: RH, DSI, Sage X3" style="padding:6px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:180px"></div>
+        <div><label style="font-size:11px;color:#888;display:block;margin-bottom:3px">Raison</label>
+          <input id="ex-raison" placeholder="ex: Hors périmètre PMS" style="padding:6px 8px;border:1px solid #ddd;border-radius:5px;font-size:13px;width:200px"></div>
+        <button class="btn btn-primary" onclick="addExclusion()">+ Ajouter règle</button>
+      </div>
+    </div>
+    ${rules.length === 0 ? '<p style="color:#888;padding:10px">Aucune règle d\'exclusion.</p>' : ''}
+    ${rules.length > 0 ? `<table>
+      <thead><tr><th>Champ</th><th>Opérateur</th><th>Valeur</th><th>Raison</th><th>Créé par</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        ${rules.map(r => `<tr style="opacity:${r.actif ? 1 : 0.45}">
+          <td><strong>${r.champ}</strong></td>
+          <td style="color:#888">${r.operateur}</td>
+          <td>${r.valeur}</td>
+          <td style="color:#666">${r.raison}</td>
+          <td style="font-size:11px;color:#aaa">${r.cree_par}</td>
+          <td><span style="font-size:11px;font-weight:600;color:${r.actif ? '#2e7d32' : '#999'}">${r.actif ? '● Actif' : '○ Inactif'}</span></td>
+          <td style="display:flex;gap:4px">
+            <button class="btn" onclick="toggleExclusion(${r.id})" title="${r.actif ? 'Désactiver' : 'Activer'}">${r.actif ? '⏸' : '▶'}</button>
+            <button class="btn" onclick="deleteExclusion(${r.id})">✕</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>` : ''}
+  `;
+}
+
+async function addExclusion() {
+  const champ = document.getElementById('ex-champ').value;
+  const op = document.getElementById('ex-op').value;
+  const val = document.getElementById('ex-val').value.trim();
+  const raison = document.getElementById('ex-raison').value.trim();
+  if (!val || !raison) return alert('Valeur et raison obligatoires.');
+  const expert = currentExpert || prompt('Votre nom :') || 'Expert';
+  await api('POST', '/exclusions', { champ, operateur: op, valeur: val, raison, cree_par: expert });
+  renderExclusions();
+}
+
+async function toggleExclusion(id) {
+  await api('PATCH', '/exclusions/' + id);
+  renderExclusions();
+}
+
+async function deleteExclusion(id) {
+  if (!confirm('Supprimer cette règle ?')) return;
+  await api('DELETE', '/exclusions/' + id);
+  renderExclusions();
 }
 
 async function deleteEntry(pattern) {

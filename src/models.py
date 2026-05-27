@@ -50,6 +50,17 @@ class DictionaryEntry(BaseModel):
     poids: str = "faible"  # faible | moyen | fort
 
 
+class ExclusionRule(BaseModel):
+    id: Optional[int] = None
+    champ: str        # site | produit | objet | type
+    operateur: str    # contient | egal | commence_par
+    valeur: str
+    raison: str
+    actif: bool = True
+    cree_par: str
+    date_creation: str
+
+
 class Semaine(BaseModel):
     code: str  # e.g. "2026-W21"
     date_debut: str

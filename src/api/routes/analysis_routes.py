@@ -7,7 +7,7 @@ from src.analysis.ollama_client import OllamaClient, select_model, get_available
 from src.analysis.rag import RegulatoryRAG
 from src.analysis.pipeline import AnalysisPipeline
 from src.dictionary.dict_manager import DictionaryManager
-from src.models import Ticket
+from src.models import Ticket, ExclusionRule
 from src.config import get_settings
 
 router = APIRouter(tags=["analysis"])
@@ -28,8 +28,12 @@ async def run_analysis(semaine_code: str):
     ollama = OllamaClient(settings["ollama_url"], model)
     rag = RegulatoryRAG(settings["chroma_path"], settings["regulatory_path"])
     dm = DictionaryManager()
+    with get_db() as conn:
+        excl_rows = conn.execute("SELECT * FROM exclusions WHERE actif = 1").fetchall()
+    exclusion_rules = [ExclusionRule(**dict(r)) for r in excl_rows]
     pipeline = AnalysisPipeline(
         ollama=ollama, rag=rag, dictionary_entries=dm.list_for_prompt(),
+        exclusion_rules=exclusion_rules,
         threshold_clos=settings["confidence_threshold_clos"],
         threshold_escalate=settings["confidence_threshold_escalate"],
     )

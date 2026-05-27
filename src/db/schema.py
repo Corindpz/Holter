@@ -54,6 +54,17 @@ CREATE TABLE IF NOT EXISTS decisions (
     horodatage TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS exclusions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    champ TEXT NOT NULL,
+    operateur TEXT NOT NULL,
+    valeur TEXT NOT NULL,
+    raison TEXT NOT NULL,
+    actif INTEGER DEFAULT 1,
+    cree_par TEXT NOT NULL,
+    date_creation TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS dictionnaire (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     pattern TEXT NOT NULL UNIQUE,

@@ -1,6 +1,24 @@
 let currentSemaine = null;
 let currentExpert = null;
 
+async function refreshStatus() {
+  try {
+    const s = await fetch('/api/status').then(r => r.json());
+    const bar = document.getElementById('ai-status-bar');
+    if (!bar) return;
+    if (!s.ollama_running) {
+      bar.className = 'status-bar status-error';
+      bar.textContent = '⬤ Ollama non démarré — analyse IA indisponible';
+    } else if (!s.model_ready) {
+      bar.className = 'status-bar status-warn';
+      bar.textContent = `⬤ Modèle non téléchargé (${s.model_selected}) — exécutez : ${s.pull_command}`;
+    } else {
+      bar.className = 'status-bar status-ok';
+      bar.textContent = `⬤ IA prête · ${s.model_selected} · RAM dispo ${s.ram_available_gb} GB`;
+    }
+  } catch(e) { /* ignore */ }
+}
+
 async function api(method, path, body) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
@@ -236,4 +254,6 @@ async function exportPDF() {
 window.onload = async () => {
   await loadSemaineList();
   if (currentSemaine) await renderDashboard();
+  await refreshStatus();
+  setInterval(refreshStatus, 15000);
 };

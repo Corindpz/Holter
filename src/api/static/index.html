@@ -17,6 +17,7 @@
     <label class="upload-btn">Importer fichier<input type="file" id="csv-input" accept=".csv,.xlsx" onchange="importCSV()" style="display:none"></label>
   </div>
 </div>
+<div id="ai-status-bar" class="status-bar status-warn">⬤ Vérification du statut IA...</div>
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dashboard',this)">Tableau de bord</button>
   <button class="tab" onclick="switchTab('review',this)">File de revue <span class="tab-badge" id="badge-pending"></span></button>

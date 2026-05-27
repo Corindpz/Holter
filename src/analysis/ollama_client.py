@@ -59,3 +59,13 @@ class OllamaClient:
                 return r.status_code == 200
         except Exception:
             return False
+
+    async def list_models(self) -> List[str]:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                r = await client.get(f"{self.base_url}/api/tags")
+                if r.status_code == 200:
+                    return [m["name"] for m in r.json().get("models", [])]
+        except Exception:
+            pass
+        return []

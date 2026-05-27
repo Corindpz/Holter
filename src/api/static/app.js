@@ -51,7 +51,7 @@ async function importCSV() {
     document.getElementById('semaine-select').value = data.semaine_code;
     currentSemaine = data.semaine_code;
     await renderDashboard();
-    if (confirm('Lancer l\'analyse IA maintenant ?')) runAnalysis();
+    // L'utilisateur lance l'analyse via le bouton du tableau de bord
   } catch(e) { alert('Erreur import : ' + e.message); }
 }
 
@@ -115,8 +115,12 @@ async function renderDashboard() {
       <div class="kpi kpi-amber"><div class="kpi-label">À surveiller</div><div class="kpi-value">${kpis.surveiller}</div></div>
       <div class="kpi kpi-green"><div class="kpi-label">Clos automatiquement</div><div class="kpi-value">${kpis.clos}</div></div>
     </div>
-    <button class="btn btn-primary" onclick="exportPDF()">Exporter rapport PDF</button>
-    ${pending > 0 ? '<div class="warn-box" style="margin-top:12px">⚠ ' + pending + ' ticket(s) ANALYSE_REQUISE en attente de validation. L\'export sera déverrouillé après validation complète.</div>' : ''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <button class="btn btn-primary" onclick="runAnalysis()" id="btn-analyse">▶ Lancer l'analyse IA</button>
+      <button class="btn" onclick="exportPDF()">Exporter rapport PDF</button>
+    </div>
+    ${kpis.clos > 0 && kpis.total > 0 ? '<div style="font-size:11px;color:#888;margin-bottom:8px">Analyse déjà effectuée · ' + kpis.clos + ' tickets clos, ' + kpis.analyse_requise + ' à réviser. Relancer écrasera les résultats existants.</div>' : ''}
+    ${pending > 0 ? '<div class="warn-box" style="margin-top:4px">⚠ ' + pending + ' ticket(s) ANALYSE_REQUISE en attente de validation. L\'export sera déverrouillé après validation complète.</div>' : ''}
   `;
 }
 

@@ -23,6 +23,7 @@ class AnalysisResult(BaseModel):
     raisonnement: Optional[str] = None
     articles_cites: List[str] = []
     capa_suggere: bool = False
+    capa_justification: Optional[str] = None
     mots_cles: List[str] = []
     passe_finale: int = 1
 

@@ -145,6 +145,7 @@ async function renderReview() {
       </div>
       <div class="ticket-body">
         <div class="raqa-text">${t.raisonnement || ''}</div>
+        ${t.capa_suggere ? '<div style="font-size:12px;color:#E24B4A;margin-top:6px;font-weight:600;padding:6px 8px;background:#fff5f5;border-radius:4px;border-left:3px solid #E24B4A">⚠ CAPA suggéré' + (t.capa_justification ? '<br><span style="font-weight:400;color:#333">' + t.capa_justification + '</span>' : '') + '</div>' : ''}
         <div class="action-bar">
           <button class="btn" onclick="decide('${t.id}','CONFIRMER','${t.decision}',null)">✓ Confirmer</button>
           <button class="btn btn-red" onclick="reclasser('${t.id}','${t.decision}')">↺ Reclasser</button>
@@ -215,7 +216,7 @@ async function renderSignals() {
         </div>
         <div class="ticket-body">
           <div class="raqa-text">${t.raisonnement || ''}</div>
-          ${t.capa_suggere ? '<div style="font-size:11px;color:#E24B4A;margin-top:4px;font-weight:600">⚠ CAPA suggéré</div>' : ''}
+          ${t.capa_suggere ? '<div style="font-size:11px;color:#E24B4A;margin-top:6px;font-weight:600">⚠ CAPA suggéré' + (t.capa_justification ? ' — ' + t.capa_justification : '') + '</div>' : ''}
         </div>
       </div>`).join('');
 }

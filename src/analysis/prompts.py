@@ -23,6 +23,7 @@ ANALYSIS_JSON_SCHEMA = {
         "raisonnement": {"type": "string"},
         "articles_cites": {"type": "array", "items": {"type": "string"}},
         "capa_suggere": {"type": "boolean"},
+        "capa_justification": {"type": ["string", "null"]},
         "mots_cles": {"type": "array", "items": {"type": "string"}},
     },
     "required": ["decision", "confiance", "raisonnement"],
@@ -74,7 +75,8 @@ def build_pass2_messages(
     user_content = (
         f"{dict_section}\n\n{rag_section}\n\n{_format_ticket(ticket)}\n\n"
         "Analyse approfondie avec chain-of-thought. Énumère d'abord les indices observés, "
-        "les articles applicables, les contradictions éventuelles, puis conclus. JSON uniquement."
+        "les articles applicables, les contradictions éventuelles, puis conclus. "
+        "Si capa_suggere est true, renseigne capa_justification avec la raison précise en 1-2 phrases. JSON uniquement."
     )
     return [
         {"role": "system", "content": _SYSTEM_RAQA},

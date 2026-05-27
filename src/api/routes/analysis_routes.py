@@ -44,12 +44,14 @@ async def run_analysis(semaine_code: str):
                 conn.execute(
                     """INSERT OR REPLACE INTO analyses
                        (ticket_id, semaine_code, decision, signal, niveau, confiance,
-                        raisonnement, articles_cites, capa_suggere, mots_cles, passe_finale)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                        raisonnement, articles_cites, capa_suggere, capa_justification,
+                        mots_cles, passe_finale)
+                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (ticket.id, semaine_code, result.decision, result.signal, result.niveau,
                      result.confiance, result.raisonnement,
                      json.dumps(result.articles_cites, ensure_ascii=False),
                      int(result.capa_suggere),
+                     result.capa_justification,
                      json.dumps(result.mots_cles, ensure_ascii=False),
                      result.passe_finale),
                 )

@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS analyses (
     raisonnement TEXT,
     articles_cites TEXT,
     capa_suggere INTEGER DEFAULT 0,
+    capa_justification TEXT,
     mots_cles TEXT,
     passe_finale INTEGER DEFAULT 1,
     PRIMARY KEY (ticket_id, semaine_code),
@@ -70,5 +71,10 @@ CREATE TABLE IF NOT EXISTS dictionnaire (
 def init_db(db_path: str) -> None:
     conn = sqlite3.connect(db_path)
     conn.executescript(DDL)
+    # Migrate existing databases that lack capa_justification
+    try:
+        conn.execute("ALTER TABLE analyses ADD COLUMN capa_justification TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     conn.commit()
     conn.close()

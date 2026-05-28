@@ -20,16 +20,19 @@
 <div id="ai-status-bar" class="status-bar status-warn">⬤ Vérification du statut IA...</div>
 <div class="tabs">
   <button class="tab active" onclick="switchTab('dashboard',this)">Tableau de bord</button>
+  <button class="tab" onclick="switchTab('analytics',this)">Analyse &amp; Tendances</button>
   <button class="tab" onclick="switchTab('review',this)">File de revue <span class="tab-badge" id="badge-pending"></span></button>
   <button class="tab" onclick="switchTab('signals',this)">Signaux vigilance</button>
   <button class="tab" onclick="switchTab('dictionary',this)">Dictionnaire</button>
   <button class="tab" onclick="switchTab('exclusions',this)">Exclusions</button>
 </div>
 <div id="panel-dashboard" class="panel active"><p style="color:#888;padding:20px">Importez un CSV pour commencer.</p></div>
+<div id="panel-analytics" class="panel"></div>
 <div id="panel-review" class="panel"></div>
 <div id="panel-signals" class="panel"></div>
 <div id="panel-dictionary" class="panel"></div>
 <div id="panel-exclusions" class="panel"></div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

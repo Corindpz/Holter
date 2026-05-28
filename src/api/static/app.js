@@ -32,6 +32,7 @@ function switchTab(name, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'analytics' && currentSemaine) loadAnalytics();
   if (name === 'review' && currentSemaine) renderReview();
   if (name === 'signals' && currentSemaine) renderSignals();
   if (name === 'dictionary') renderDictionary();
@@ -317,6 +318,155 @@ async function exportPDF() {
   a.href = URL.createObjectURL(blob);
   a.download = 'holter_pms_' + currentSemaine + '.pdf';
   a.click();
+}
+
+let _trendChart = null;
+let _produitChart = null;
+let _currentPriorities = [];
+
+async function loadAnalytics() {
+  const panel = document.getElementById('panel-analytics');
+  if (!currentSemaine) {
+    panel.innerHTML = '<p style="color:#888;padding:20px">Sélectionnez une semaine.</p>';
+    return;
+  }
+  panel.innerHTML = '<p style="color:#888;padding:20px">Chargement des tendances...</p>';
+  try {
+    const data = await api('GET', '/analytics/trends/' + currentSemaine);
+    renderTrendsCharts(data);
+    try {
+      const priData = await api('GET', '/analytics/priorities/' + currentSemaine);
+      _currentPriorities = priData.recommendations || [];
+      renderPriorities(priData);
+    } catch (_) {
+      renderPriorities(null);
+    }
+  } catch (e) {
+    panel.innerHTML = '<p style="color:#c00;padding:20px">Erreur : ' + e.message + '</p>';
+  }
+}
+
+function renderTrendsCharts(data) {
+  const panel = document.getElementById('panel-analytics');
+  panel.innerHTML = `
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:6;min-width:300px">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;color:#333">Tendances signaux — 13 semaines glissantes</h3>
+        <canvas id="chart-trends" height="200"></canvas>
+        <h3 style="font-size:14px;font-weight:600;margin:20px 0 12px;color:#333">Top produits par score composite</h3>
+        <canvas id="chart-produits" height="200"></canvas>
+      </div>
+      <div style="flex:4;min-width:260px" id="priorities-zone">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="font-size:14px;font-weight:600;color:#333;margin:0">Priorités IA</h3>
+          <button class="btn btn-primary" onclick="generatePriorities()" id="btn-gen-pri">Générer les priorités IA</button>
+        </div>
+        <div id="priorities-content"><p style="color:#888;font-size:13px">Aucune recommandation générée.</p></div>
+      </div>
+    </div>`;
+
+  if (_trendChart) { _trendChart.destroy(); _trendChart = null; }
+  const ctx1 = document.getElementById('chart-trends').getContext('2d');
+  _trendChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: data.semaines,
+      datasets: [
+        { label: 'MV', data: data.series.MV, borderColor: '#e53935', backgroundColor: 'rgba(229,57,53,0.08)', tension: 0.3, fill: true },
+        { label: 'IV', data: data.series.IV, borderColor: '#fb8c00', backgroundColor: 'rgba(251,140,0,0.08)', tension: 0.3, fill: true },
+        { label: 'SECU', data: data.series.SECU, borderColor: '#1e88e5', backgroundColor: 'rgba(30,136,229,0.08)', tension: 0.3, fill: true },
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  if (_produitChart) { _produitChart.destroy(); _produitChart = null; }
+  const ctx2 = document.getElementById('chart-produits').getContext('2d');
+  const top = (data.top_produits || []).slice(0, 10);
+  _produitChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+      labels: top.map(p => (p.velocite > 2.0 ? '🔴 ' : '') + p.produit),
+      datasets: [{
+        label: 'Score composite',
+        data: top.map(p => p.score),
+        backgroundColor: top.map(p => p.score > 70 ? 'rgba(229,57,53,0.7)' : p.score > 40 ? 'rgba(251,140,0,0.7)' : 'rgba(67,160,71,0.7)'),
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, max: 100 } }
+    }
+  });
+}
+
+function renderPriorities(priData) {
+  const zone = document.getElementById('priorities-content');
+  if (!zone) return;
+  if (!priData || !priData.recommendations || priData.recommendations.length === 0) {
+    zone.innerHTML = '<p style="color:#888;font-size:13px">Aucune recommandation générée.<br><span style="font-size:11px">Lancez l\'analyse IA, puis cliquez "Générer les priorités IA".</span></p>';
+    return;
+  }
+  _currentPriorities = priData.recommendations;
+  const ts = priData.generated_at ? new Date(priData.generated_at).toLocaleString('fr-FR') : '';
+  zone.innerHTML = `
+    <div style="font-size:11px;color:#888;margin-bottom:10px">Générées le ${ts}</div>
+    ${priData.recommendations.map((r, i) => `
+    <div style="background:white;border:1px solid #eee;border-radius:8px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;
+          background:${r.score > 70 ? '#fce4ec' : r.score > 40 ? '#fff8e1' : '#e8f5e9'};
+          color:${r.score > 70 ? '#c62828' : r.score > 40 ? '#e65100' : '#2e7d32'}">Score ${r.score}</span>
+        <span style="font-size:11px;color:#888">Priorité #${r.rang}</span>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${r.titre}</div>
+      <div style="font-size:11px;color:#888;margin-bottom:6px">${r.cluster}</div>
+      <div style="font-size:12px;margin-bottom:4px"><strong>Action :</strong> ${r.action_suggeree}</div>
+      <div style="font-size:11px;color:#e65100;margin-bottom:8px">⏱ ${r.delai_reglementaire}</div>
+      <button class="btn" onclick="showJustificationModal(${i})" style="font-size:11px">Voir justification MDR</button>
+    </div>`).join('')}`;
+}
+
+async function generatePriorities() {
+  if (!currentSemaine) return;
+  const btn = document.getElementById('btn-gen-pri');
+  if (btn) { btn.disabled = true; btn.textContent = 'Génération en cours...'; }
+  try {
+    const priData = await api('POST', '/analytics/priorities/' + currentSemaine);
+    renderPriorities(priData);
+  } catch (e) {
+    alert('Erreur génération priorités : ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Générer les priorités IA'; }
+  }
+}
+
+function showJustificationModal(idx) {
+  const r = _currentPriorities[idx];
+  if (!r) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:12px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+        <h3 style="font-size:15px;font-weight:700;margin:0;flex:1">${r.titre}</h3>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;margin-left:12px">✕</button>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">${r.cluster}</div>
+      <div style="font-size:13px;line-height:1.7;margin-bottom:16px;color:#333">${r.justification}</div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Articles réglementaires</div>
+        <div>${r.articles_mdr.map(a => '<span style="font-size:11px;padding:3px 10px;background:#f0f4ff;border-radius:10px;margin:2px;display:inline-block">' + a + '</span>').join('')}</div>
+      </div>
+      <div style="font-size:12px;padding:12px;background:#fff8e1;border-radius:6px;border-left:3px solid #f57f17">
+        <div style="margin-bottom:4px"><strong>Action :</strong> ${r.action_suggeree}</div>
+        <div><strong>Délai réglementaire :</strong> ${r.delai_reglementaire}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
 }
 
 window.onload = async () => {

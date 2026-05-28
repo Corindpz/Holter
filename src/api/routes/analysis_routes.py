@@ -110,6 +110,7 @@ async def get_analyses(semaine_code: str):
 
 @router.get("/semaines")
 async def list_semaines():
+    from src.models import Semaine as SemaineModel
     with get_db() as conn:
         rows = conn.execute("SELECT * FROM semaines ORDER BY code DESC").fetchall()
-    return [dict(r) for r in rows]
+    return [SemaineModel(**dict(r)).model_dump() for r in rows]

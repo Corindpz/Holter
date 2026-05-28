@@ -100,8 +100,8 @@ def get_trend_series(semaine_code: str, weeks: int = 13) -> dict:
 
     series = {sig: [bucket[s][sig] for s in window_sorted] for sig in ("MV", "IV", "SECU")}
     top_clusters = get_top_clusters(semaine_code, weeks)
-    top_produits = [
-        {"produit": c.produit, "score": c.score, "count": c.count_current, "velocite": c.velocite}
-        for c in top_clusters
-    ]
-    return {"semaines": window_sorted, "series": series, "top_produits": top_produits}
+    return {
+        "weekly_labels": window_sorted,
+        "weekly_by_signal": series,
+        "clusters": [c.model_dump() for c in top_clusters],
+    }

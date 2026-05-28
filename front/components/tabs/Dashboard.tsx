@@ -65,6 +65,7 @@ export function Dashboard({
           }
         } catch {
           clearInterval(poll);
+          setProgress(null);
           setAnalysisRunning(false);
         }
       }, 2000);
@@ -194,7 +195,7 @@ export function Dashboard({
                 ))}
               </div>
 
-              {(analysisRunning || progress) && (
+              {analysisRunning && (
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[11px]" style={{ color: "var(--color-text-secondary)" }}>
                     <span>Analyse en cours…</span>

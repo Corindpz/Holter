@@ -24,9 +24,16 @@ app.include_router(exclusion_router, prefix="/api")
 app.include_router(analytics_router, prefix="/api")
 
 _STATIC = Path(__file__).parent / "static"
-app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 
 
 @app.get("/", include_in_schema=False)
 async def root():
+    return FileResponse(str(_STATIC / "index.html"))
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_spa(full_path: str):
+    file_path = _STATIC / full_path
+    if file_path.is_file():
+        return FileResponse(str(file_path))
     return FileResponse(str(_STATIC / "index.html"))

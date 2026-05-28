@@ -12,6 +12,7 @@ _DEFAULTS = {
     "confidence_threshold_escalate": 0.70,
     "chroma_path": "./chroma_db",
     "regulatory_path": "./regulatory",
+    "analysis_concurrency": 6,  # asyncio.Semaphore — augmenter si la VM a de la RAM
 }
 
 

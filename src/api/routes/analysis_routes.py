@@ -38,28 +38,43 @@ async def run_analysis(semaine_code: str):
         threshold_escalate=settings["confidence_threshold_escalate"],
     )
 
-    _progress[semaine_code] = {"done": 0, "total": len(rows), "running": True}
+    concurrency = int(settings.get("analysis_concurrency", 6))
+    _progress[semaine_code] = {"done": 0, "total": len(rows), "running": True, "errors": 0}
 
     async def _run():
         tickets = [Ticket(**dict(r)) for r in rows]
-        for i, ticket in enumerate(tickets):
-            result = await pipeline.analyze(ticket)
-            with get_db() as conn:
-                conn.execute(
-                    """INSERT OR REPLACE INTO analyses
-                       (ticket_id, semaine_code, decision, signal, niveau, confiance,
-                        raisonnement, articles_cites, capa_suggere, capa_justification,
-                        mots_cles, passe_finale)
-                       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (ticket.id, semaine_code, result.decision, result.signal, result.niveau,
-                     result.confiance, result.raisonnement,
-                     json.dumps(result.articles_cites, ensure_ascii=False),
-                     int(result.capa_suggere),
-                     result.capa_justification,
-                     json.dumps(result.mots_cles, ensure_ascii=False),
-                     result.passe_finale),
-                )
-            _progress[semaine_code]["done"] = i + 1
+        sem = asyncio.Semaphore(concurrency)
+        db_lock = asyncio.Lock()
+
+        async def _process(ticket: Ticket) -> None:
+            async with sem:
+                try:
+                    result = await pipeline.analyze(ticket)
+                except Exception as exc:
+                    # Ticket stays without analysis rather than crashing the whole batch
+                    _progress[semaine_code]["errors"] += 1
+                    return
+
+            async with db_lock:
+                with get_db() as conn:
+                    conn.execute(
+                        """INSERT OR REPLACE INTO analyses
+                           (ticket_id, semaine_code, decision, signal, niveau, confiance,
+                            raisonnement, articles_cites, capa_suggere, capa_justification,
+                            mots_cles, passe_finale)
+                           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        (ticket.id, semaine_code, result.decision, result.signal, result.niveau,
+                         result.confiance, result.raisonnement,
+                         json.dumps(result.articles_cites, ensure_ascii=False),
+                         int(result.capa_suggere),
+                         result.capa_justification,
+                         json.dumps(result.mots_cles, ensure_ascii=False),
+                         result.passe_finale),
+                    )
+                _progress[semaine_code]["done"] += 1
+
+        await asyncio.gather(*[_process(t) for t in tickets])
+
         _progress[semaine_code]["running"] = False
         with get_db() as conn:
             conn.execute(
@@ -67,7 +82,7 @@ async def run_analysis(semaine_code: str):
             )
 
     asyncio.create_task(_run())
-    return {"status": "started", "semaine_code": semaine_code, "total": len(rows)}
+    return {"status": "started", "semaine_code": semaine_code, "total": len(rows), "concurrency": concurrency}
 
 
 @router.get("/analysis/progress/{semaine_code}")

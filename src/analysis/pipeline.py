@@ -22,6 +22,15 @@ def _matches_exclusion(ticket: Ticket, rule: ExclusionRule) -> bool:
     return False
 
 
+def _matches_fort_pattern(ticket: Ticket, entry: DictionaryEntry) -> bool:
+    """Vérifie si le pattern apparaît dans l'objet ou la description anonymisée."""
+    haystack = " ".join(filter(None, [
+        ticket.objet,
+        ticket.description_anonyme or ticket.description,
+    ])).lower()
+    return entry.pattern.lower() in haystack
+
+
 def _parse_result(raw: dict, passe: int) -> AnalysisResult:
     return AnalysisResult(
         decision=raw.get("decision", "SURVEILLER"),
@@ -64,6 +73,24 @@ class AnalysisPipeline:
                     passe_finale=0,
                 )
 
+        # Pre-pass — patterns "fort" du dictionnaire (≥10 semaines validées, bypass LLM garanti)
+        for entry in self.dictionary_entries:
+            if entry.poids == "fort" and _matches_fort_pattern(ticket, entry):
+                return AnalysisResult(
+                    decision="ANALYSE_REQUISE",
+                    signal=entry.signal,
+                    niveau=entry.niveau,
+                    confiance=1.0,
+                    raisonnement=(
+                        f"Pattern fort détecté : \"{entry.pattern}\" "
+                        f"({entry.article or entry.signal}) — "
+                        "classification déterministe, bypass LLM."
+                    ),
+                    articles_cites=[entry.article] if entry.article else [],
+                    mots_cles=[entry.pattern],
+                    passe_finale=0,
+                )
+
         # Pass 1 — fast triage
         msgs1 = build_pass1_messages(ticket, self.dictionary_entries)
         raw1 = await self.ollama.chat(msgs1, json_schema=ANALYSIS_JSON_SCHEMA)
@@ -91,12 +118,20 @@ class AnalysisPipeline:
     async def analyze_batch(
         self,
         tickets: List[Ticket],
+        concurrency: int = 6,
         progress_callback=None,
-    ) -> List[AnalysisResult]:
-        results = []
-        for i, ticket in enumerate(tickets):
-            result = await self.analyze(ticket)
-            results.append(result)
+    ) -> List[Optional[AnalysisResult]]:
+        results: List[Optional[AnalysisResult]] = [None] * len(tickets)
+        sem = asyncio.Semaphore(concurrency)
+
+        async def _worker(i: int, ticket: Ticket) -> None:
+            async with sem:
+                try:
+                    results[i] = await self.analyze(ticket)
+                except Exception:
+                    results[i] = None
             if progress_callback:
                 progress_callback(i + 1, len(tickets))
+
+        await asyncio.gather(*[_worker(i, t) for i, t in enumerate(tickets)])
         return results

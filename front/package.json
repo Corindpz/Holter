@@ -1,0 +1,30 @@
+{
+  "name": "holter-pms",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "build:static": "next build && cp -r out ../src/api/static/next",
+    "deploy": "next build && rm -rf ../src/api/static && cp -r out ../src/api/static",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.4",
+    "geist": "^1.7.1",
+    "next": "15.3.2",
+    "react": "^19.0.0",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "autoprefixer": "^10",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}

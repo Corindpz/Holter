@@ -1,4 +1,5 @@
 import json
+from collections import Counter
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Optional
@@ -45,7 +46,10 @@ async def import_file(file: UploadFile = File(...)):
         if not rows:
             raise HTTPException(status_code=400, detail="Fichier vide ou mapping incorrect")
 
-        semaine_code = _compute_semaine_code(rows[0].get("date_creation"))
+        # Semaine majoritaire parmi tous les tickets (évite que le 1er ticket
+        # dicte la semaine si le CSV en contient plusieurs ou si sa date est vide)
+        all_codes = [_compute_semaine_code(r.get("date_creation")) for r in rows]
+        semaine_code = Counter(all_codes).most_common(1)[0][0]
         tickets = [normalize_ticket(r, semaine_code) for r in rows if r.get("id")]
         tickets = deduplicate(tickets, semaine_code)
 

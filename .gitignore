@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Base de données locale
+holter.db
+holter.db-shm
+holter.db-wal
+
+# ChromaDB (généré à la volée)
+chroma_db/
+
+# Logs
+*.log
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+# Node / Next.js
+front/node_modules/
+front/.next/
+front/out/
+
+# Env local
+front/.env.local
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# CSV d'import (données patient)
+*.csv
+*.xlsx

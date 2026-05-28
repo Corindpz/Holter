@@ -320,6 +320,10 @@ async function exportPDF() {
   a.click();
 }
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 let _trendChart = null;
 let _produitChart = null;
 let _currentPriorities = [];
@@ -418,13 +422,13 @@ function renderPriorities(priData) {
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;
           background:${r.score > 70 ? '#fce4ec' : r.score > 40 ? '#fff8e1' : '#e8f5e9'};
-          color:${r.score > 70 ? '#c62828' : r.score > 40 ? '#e65100' : '#2e7d32'}">Score ${r.score}</span>
-        <span style="font-size:11px;color:#888">Priorité #${r.rang}</span>
+          color:${r.score > 70 ? '#c62828' : r.score > 40 ? '#e65100' : '#2e7d32'}">Score ${esc(r.score)}</span>
+        <span style="font-size:11px;color:#888">Priorité #${esc(r.rang)}</span>
       </div>
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${r.titre}</div>
-      <div style="font-size:11px;color:#888;margin-bottom:6px">${r.cluster}</div>
-      <div style="font-size:12px;margin-bottom:4px"><strong>Action :</strong> ${r.action_suggeree}</div>
-      <div style="font-size:11px;color:#e65100;margin-bottom:8px">⏱ ${r.delai_reglementaire}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${esc(r.titre)}</div>
+      <div style="font-size:11px;color:#888;margin-bottom:6px">${esc(r.cluster)}</div>
+      <div style="font-size:12px;margin-bottom:4px"><strong>Action :</strong> ${esc(r.action_suggeree)}</div>
+      <div style="font-size:11px;color:#e65100;margin-bottom:8px">⏱ ${esc(r.delai_reglementaire)}</div>
       <button class="btn" onclick="showJustificationModal(${i})" style="font-size:11px">Voir justification MDR</button>
     </div>`).join('')}`;
 }
@@ -452,18 +456,18 @@ function showJustificationModal(idx) {
   overlay.innerHTML = `
     <div style="background:white;border-radius:12px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.2)">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-        <h3 style="font-size:15px;font-weight:700;margin:0;flex:1">${r.titre}</h3>
+        <h3 style="font-size:15px;font-weight:700;margin:0;flex:1">${esc(r.titre)}</h3>
         <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;margin-left:12px">✕</button>
       </div>
-      <div style="font-size:12px;color:#888;margin-bottom:12px">${r.cluster}</div>
-      <div style="font-size:13px;line-height:1.7;margin-bottom:16px;color:#333">${r.justification}</div>
+      <div style="font-size:12px;color:#888;margin-bottom:12px">${esc(r.cluster)}</div>
+      <div style="font-size:13px;line-height:1.7;margin-bottom:16px;color:#333">${esc(r.justification)}</div>
       <div style="margin-bottom:14px">
         <div style="font-size:11px;font-weight:600;color:#555;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Articles réglementaires</div>
-        <div>${r.articles_mdr.map(a => '<span style="font-size:11px;padding:3px 10px;background:#f0f4ff;border-radius:10px;margin:2px;display:inline-block">' + a + '</span>').join('')}</div>
+        <div>${r.articles_mdr.map(a => '<span style="font-size:11px;padding:3px 10px;background:#f0f4ff;border-radius:10px;margin:2px;display:inline-block">' + esc(a) + '</span>').join('')}</div>
       </div>
       <div style="font-size:12px;padding:12px;background:#fff8e1;border-radius:6px;border-left:3px solid #f57f17">
-        <div style="margin-bottom:4px"><strong>Action :</strong> ${r.action_suggeree}</div>
-        <div><strong>Délai réglementaire :</strong> ${r.delai_reglementaire}</div>
+        <div style="margin-bottom:4px"><strong>Action :</strong> ${esc(r.action_suggeree)}</div>
+        <div><strong>Délai réglementaire :</strong> ${esc(r.delai_reglementaire)}</div>
       </div>
     </div>`;
   document.body.appendChild(overlay);

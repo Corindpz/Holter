@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
-    "build:static": "next build && cp -r out ../src/api/static/next",
-    "deploy": "next build && rm -rf ../src/api/static && cp -r out ../src/api/static",
+    "deploy": "next build && cp -r out/. ../src/api/static/",
     "start": "next start",
     "lint": "next lint"
   },

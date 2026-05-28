@@ -61,6 +61,29 @@ class ExclusionRule(BaseModel):
     date_creation: str
 
 
+class TrendCluster(BaseModel):
+    cluster_id: str
+    produit: str
+    signal: Optional[str]
+    niveau: Optional[str]
+    count_current: int
+    avg_13s: float
+    score: float
+    gravite_weight: float
+    velocite: float
+
+
+class PriorityRecommendation(BaseModel):
+    rang: int
+    titre: str
+    cluster: str
+    score: float
+    justification: str
+    articles_mdr: List[str]
+    action_suggeree: str
+    delai_reglementaire: str
+
+
 class Semaine(BaseModel):
     code: str  # e.g. "2026-W21"
     date_debut: str

@@ -76,6 +76,12 @@ CREATE TABLE IF NOT EXISTS dictionnaire (
     semaines_validees INTEGER DEFAULT 0,
     poids TEXT DEFAULT 'faible'
 );
+
+CREATE TABLE IF NOT EXISTS priorites (
+    semaine_code TEXT PRIMARY KEY,
+    generated_at TEXT NOT NULL,
+    recommendations TEXT NOT NULL
+);
 """
 
 
@@ -87,5 +93,12 @@ def init_db(db_path: str) -> None:
         conn.execute("ALTER TABLE analyses ADD COLUMN capa_justification TEXT")
     except sqlite3.OperationalError:
         pass  # Column already exists
+    try:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS priorites "
+            "(semaine_code TEXT PRIMARY KEY, generated_at TEXT NOT NULL, recommendations TEXT NOT NULL)"
+        )
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()

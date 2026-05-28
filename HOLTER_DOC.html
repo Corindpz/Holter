@@ -857,6 +857,74 @@
     </div>
   </div>
 
+  <!-- ── Sélection modèle ─────────────────────────────────── -->
+  <div class="section">
+    <div class="section-label">Modèle IA</div>
+    <h2>Sélection automatique du modèle</h2>
+    <p>
+      Holter détecte la RAM disponible au démarrage et choisit automatiquement
+      le meilleur modèle Ollama installé. <strong>Aucune configuration manuelle n'est nécessaire</strong>
+      entre un poste de développement et la VM de production.
+    </p>
+
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">
+      <table class="stack-table">
+        <thead>
+          <tr>
+            <th>RAM disponible</th>
+            <th>Modèle sélectionné</th>
+            <th>Contexte</th>
+            <th>Qualité de détection</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono-tag">≥ 60 Go</span></td>
+            <td><strong style="color:var(--clos)">Qwen2.5 72B</strong> <span style="font-size:11px;color:var(--text-3)">(quantisé)</span></td>
+            <td style="color:var(--text-2)">VM production 64 Go</td>
+            <td style="color:var(--clos)">Excellente</td>
+          </tr>
+          <tr>
+            <td><span class="mono-tag">≥ 28 Go</span></td>
+            <td><strong>Qwen2.5 32B</strong></td>
+            <td style="color:var(--text-2)">Station de travail haut de gamme</td>
+            <td style="color:var(--iv)">Très bonne</td>
+          </tr>
+          <tr>
+            <td><span class="mono-tag">≥ 12 Go</span></td>
+            <td><strong>Qwen2.5 14B</strong></td>
+            <td style="color:var(--text-2)">Mac avec 16–24 Go</td>
+            <td style="color:var(--iv)">Bonne</td>
+          </tr>
+          <tr>
+            <td><span class="mono-tag">&lt; 12 Go</span></td>
+            <td><strong>Mistral 7B</strong></td>
+            <td style="color:var(--text-2)">Poste de dev / test</td>
+            <td style="color:var(--secu)">Correcte</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout success">
+      <span class="callout-icon">⚡</span>
+      <div>
+        <strong>Zéro configuration entre dev et prod</strong><br>
+        Sur un Mac de développement, Holter utilise Mistral 7B (~4 Go).
+        Sur la VM 64 Go, il bascule automatiquement sur Qwen2.5 72B au démarrage —
+        sans rien modifier dans le code ni dans les paramètres.
+        Il suffit d'avoir pullé le modèle avec <code>ollama pull qwen2.5:72b</code>
+        une fois la VM configurée.
+      </div>
+    </div>
+
+    <p>
+      Il est aussi possible de forcer un modèle spécifique en ajoutant
+      <code>"model_override": "qwen2.5:72b"</code> dans <code>settings.json</code>
+      à la racine du projet.
+    </p>
+  </div>
+
   <!-- ── Stack ────────────────────────────────────────────── -->
   <div class="section">
     <div class="section-label">Architecture technique</div>

@@ -64,8 +64,8 @@ class ExclusionRule(BaseModel):
 class TrendCluster(BaseModel):
     cluster_id: str
     produit: str
-    signal: Optional[str]
-    niveau: Optional[str]
+    signal: Optional[str] = None
+    niveau: Optional[str] = None
     count_current: int
     avg_13s: float
     score: float
@@ -79,7 +79,7 @@ class PriorityRecommendation(BaseModel):
     cluster: str
     score: float
     justification: str
-    articles_mdr: List[str]
+    articles_mdr: List[str]  # articles MDR/ISO cités
     action_suggeree: str
     delai_reglementaire: str
 

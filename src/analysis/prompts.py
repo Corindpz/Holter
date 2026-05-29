@@ -136,12 +136,10 @@ def build_pass2_messages(
         f"{rag_section}\n\n"
         f"{_format_ticket(ticket)}"
         f"{coherence}\n\n"
-        "Analyse approfondie. Suis ce raisonnement en 4 étapes :\n"
-        "1. INDICES — liste les éléments du ticket qui pointent vers un signal ou son absence\n"
-        "2. COHÉRENCE — le statut du ticket est-il justifié par son contenu ? Contradiction ?\n"
-        "3. ARTICLES — cite les articles MDR/ISO/ANSM applicables s'il y a un signal\n"
-        "4. CONCLUSION — décision finale avec confiance calibrée\n"
-        "Si capa_suggere est true, renseigne capa_justification (1-2 phrases). JSON uniquement."
+        "Analyse approfondie : INDICES - éléments du ticket pointant vers un signal. "
+        "COHÉRENCE - statut justifié ? Contradiction objet/description ? "
+        "Conclus avec décision et confiance calibrée. "
+        "Si capa_suggere true, renseigne capa_justification. JSON uniquement."
     )
     return [
         {"role": "system", "content": _SYSTEM_RAQA},

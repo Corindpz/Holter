@@ -4,7 +4,10 @@ from fastapi import APIRouter, HTTPException
 
 from src.db.connection import get_db
 from src.analysis.ollama_client import OllamaClient, select_model, get_available_ram_gb
+from src.analysis.groq_client import GroqClient
+from src.analysis.anthropic_client import AnthropicClient
 from src.analysis.rag import RegulatoryRAG
+from src.analysis.ticket_cache import TicketCache
 from src.analysis.pipeline import AnalysisPipeline
 from src.dictionary.dict_manager import DictionaryManager
 from src.models import Ticket, ExclusionRule
@@ -24,22 +27,37 @@ async def run_analysis(semaine_code: str):
         raise HTTPException(status_code=404, detail="Aucun ticket pour cette semaine")
 
     settings = get_settings()
-    model = select_model(get_available_ram_gb(), settings.get("model_override"))
-    ollama = OllamaClient(settings["ollama_url"], model)
+    anthropic_key = settings.get("anthropic_api_key")
+    groq_key = settings.get("groq_api_key")
+    if anthropic_key:
+        llm = AnthropicClient(api_key=anthropic_key, model=settings.get("anthropic_model", "claude-haiku-4-5-20251001"))
+    elif groq_key:
+        llm = GroqClient(api_key=groq_key, model=settings.get("groq_model", "llama-3.3-70b-versatile"))
+    else:
+        model = select_model(get_available_ram_gb(), settings.get("model_override"))
+        llm = OllamaClient(settings["ollama_url"], model)
     rag = RegulatoryRAG(settings["chroma_path"], settings["regulatory_path"])
     dm = DictionaryManager()
     with get_db() as conn:
         excl_rows = conn.execute("SELECT * FROM exclusions WHERE actif = 1").fetchall()
+        already_done = {
+            r[0] for r in conn.execute(
+                "SELECT ticket_id FROM analyses WHERE semaine_code = ?", (semaine_code,)
+            ).fetchall()
+        }
     exclusion_rules = [ExclusionRule(**dict(r)) for r in excl_rows]
+    cache = TicketCache(settings["chroma_path"])
     pipeline = AnalysisPipeline(
-        ollama=ollama, rag=rag, dictionary_entries=dm.list_for_prompt(),
+        ollama=llm, rag=rag, dictionary_entries=dm.list_for_prompt(),
         exclusion_rules=exclusion_rules,
         threshold_clos=settings["confidence_threshold_clos"],
         threshold_escalate=settings["confidence_threshold_escalate"],
+        cache=cache,
     )
 
+    rows = [r for r in rows if dict(r)["id"] not in already_done]
     concurrency = int(settings.get("analysis_concurrency", 6))
-    _progress[semaine_code] = {"done": 0, "total": len(rows), "running": True, "errors": 0}
+    _progress[semaine_code] = {"done": len(already_done), "total": len(rows) + len(already_done), "running": True, "errors": 0}
 
     async def _run():
         tickets = [Ticket(**dict(r)) for r in rows]

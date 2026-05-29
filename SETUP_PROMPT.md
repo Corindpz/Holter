@@ -9,20 +9,19 @@ Le projet tourne sur Python 3.13. Crée un venv `.venv` à la racine et installe
 - Windows : `pip install -r requirements.txt` directement
 
 **3. Vérifier Ollama**
-Ollama est déjà installé sur cette machine. Vérifie qu'il tourne (`ollama list`). Si le modèle voulu n'est pas présent, pull celui qui correspond à la RAM disponible :
-- RAM ≥ 60 Go → `ollama pull qwen2.5:72b`
-- RAM ≥ 28 Go → `ollama pull qwen2.5:32b`
-- RAM ≥ 12 Go → `ollama pull qwen2.5:14b`
-- RAM < 12 Go  → `ollama pull mistral`
-
-Holter détecte automatiquement la RAM et choisit le meilleur modèle disponible — rien à configurer.
+Ollama est déjà installé sur cette machine. Vérifie qu'il tourne (`ollama list`). La config par défaut utilise `qwen2.5:14b` (optimisé pour VM 64 Go) — pull-le s'il n'est pas présent :
+```
+ollama pull qwen2.5:14b
+```
 
 **4. Lancer l'application**
-Depuis la racine du projet :
+Depuis la racine du projet, utilise le script de démarrage optimisé :
 ```
-python holter.py
+chmod +x start.sh && ./start.sh
 ```
-L'interface s'ouvre automatiquement dans le navigateur sur http://localhost:8765.
+Ce script démarre Ollama avec `OLLAMA_NUM_PARALLEL=3` (3 analyses en parallèle côté Ollama) puis lance Holter. L'interface s'ouvre automatiquement sur http://localhost:8765.
+
+Sur une VM 64 Go, cette config donne environ 20-25 tickets/min (~1h15 pour une semaine normale de 1700 tickets).
 
 Le front est déjà compilé dans `src/api/static/` — pas besoin de Node.js ni de `npm install`.
 

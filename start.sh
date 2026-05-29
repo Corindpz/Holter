@@ -18,7 +18,9 @@ fi
 if ! pgrep -x ollama > /dev/null; then
     echo "[Holter] Démarrage Ollama..."
     ollama serve &
-    sleep 3
+    echo "[Holter] Attente qu'Ollama soit prêt..."
+    until curl -s http://localhost:11434/api/version > /dev/null 2>&1; do sleep 1; done
+    echo "[Holter] Ollama prêt."
 fi
 
 # Activer le venv si présent

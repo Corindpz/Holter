@@ -1,7 +1,5 @@
-import asyncio
 import json
 from typing import Any, Dict, List, Optional
-import anthropic
 
 _DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 
@@ -10,6 +8,7 @@ class AnthropicClient:
     """Client Anthropic — interface identique à OllamaClient."""
 
     def __init__(self, api_key: str, model: str = _DEFAULT_MODEL):
+        import anthropic
         self._client = anthropic.AsyncAnthropic(api_key=api_key)
         self.model = model
 
